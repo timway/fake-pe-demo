@@ -1,0 +1,111 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: gitlab-pull-secret
+  namespace: pedemo-ylq3-user3
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRsYWIuY29tIjp7InVzZXJuYW1lIjoicGVkZW1vaWQiLCJwYXNzd29yZCI6ImdsZHQtaFY1aUt5Zzh5Q0FRUGp5NC1mVmEiLCJlbWFpbCI6InBlaWRAY2R3LmNvbSIsImF1dGgiOiJjR1ZrWlcxdmFXUTZaMnhrZEMxb1ZqVnBTM2xuT0hsRFFWRlFhbmswTFdaV1lRPT0ifX19
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webby
+  namespace: pedemo-ylq3-user3
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webby
+  template:
+    metadata:
+      labels:
+        app: webby
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: webby
+        image: registry.gitlab.com/ignw1/dvs-code/pedemo/rhos-pe-immersion-day/webby:v1.1
+        imagePullPolicy: Always
+        env:
+          - name: NAMESPACE
+            value: pedemo-ylq3-user3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      imagePullSecrets:
+        - name: gitlab-pull-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webby-service
+  namespace: pedemo-ylq3-user3
+spec:
+  type: ClusterIP
+  selector:
+    app: webby
+  ports:
+    - port: 80
+      targetPort: 9999
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: webby
+  namespace: pedemo-ylq3-user3
+spec:
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  to:
+    kind: Service
+    name: webby-service
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: condb
+  namespace: pedemo-ylq3-user3
+spec:
+  selector:
+    matchLabels:
+      app: condb
+  template:
+    metadata:
+      labels:
+        app: condb
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: condb
+        image: registry.gitlab.com/ignw1/dvs-code/pedemo/rhos-pe-immersion-day/condb:v1.1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 200m
+            memory: 128Mi
+          limits:
+            cpu: 400m
+            memory: 256Mi
+      imagePullSecrets:
+        - name: gitlab-pull-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: condb-service
+  namespace: pedemo-ylq3-user3
+spec:
+  selector:
+    app: condb
+  ports:
+    - port: 8888
+      targetPort: 8888
