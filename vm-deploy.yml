@@ -5,7 +5,7 @@ metadata:
   labels:
     app: vmdb 
   name: vmdb
-  namespace: pedemo-3ofz-user3
+  namespace: pedemo-ylq3-user3
 spec:
   dataVolumeTemplates:
   - apiVersion: cdi.kubevirt.io/v1beta1
