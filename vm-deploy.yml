@@ -1,0 +1,68 @@
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app: vmdb 
+  name: vmdb
+  namespace: pedemo-3ofz-user3
+spec:
+  dataVolumeTemplates:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    metadata:
+      name: vmdb
+    spec:
+      sourceRef:
+        kind: DataSource
+        name: fedora
+        namespace: openshift-virtualization-os-images
+      storage:
+        resources:
+          requests:
+            storage: 30Gi
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: vmdb
+        app: vmdb
+    spec:
+      domain:
+        cpu:
+          cores: 1
+          sockets: 2
+          threads: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - masquerade: {}
+            name: default
+          rng: {}
+        features:
+          smm:
+            enabled: true
+        firmware:
+          bootloader:
+            efi: {}
+        resources:
+          requests:
+            memory: 8Gi
+      evictionStrategy: LiveMigrate
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - dataVolume:
+          name: vmdb
+        name: rootdisk
+      - cloudInitNoCloud:
+          # NOTE: key below derived from "cat startup-script.sh | base64 -w0"
+          userDataBase64: IyEvYmluL2Jhc2gKc3VkbyBhZGR1c2VyIC1VIC1tIGNsb3VkLXVzZXIKZWNobyAiY2xvdWQtdXNlcjpkM3BsMHkiIHwgY2hwYXNzd2QKc3VkbyB1c2VybW9kIC1hRyB3aGVlbCBjbG91ZC11c2VyCnN1ZG8gZG5mIHVwZGF0ZQpzdWRvIGRuZiBncm91cGluc3RhbGwgIkRldmVsb3BlciBUb29scyIgLXkKc3VkbyBkbmYgaW5zdGFsbCBweXRob24zLXBpcCAteQpzdWRvIGRuZiBpbnN0YWxsIGdpdC1hbGwgLXkKd2FpdApzdWRvIGdpdCBjbG9uZSBodHRwczovL2RlcGxveS11c2VyOmZTaDllenRzVnNhN0RjNW14dHRSQGdpdGxhYi5jb20vaWdudzEvZHZzLWNvZGUvcGVkZW1vL3Job3MtYXdzLXBlZGVtby5naXQKY2QgLi9yaG9zLWF3cy1wZWRlbW8vZGVtby1jb250YWluZXJzCnN1ZG8gY2htb2QgNzU1IC1SICoKcGlwMyBpbnN0YWxsIC1yIHJlcXVpcmVtZW50cy50eHQKcHl0aG9uMyAuL2RiLnB5Cg==
+        name: cloudinitdisk
